@@ -30,10 +30,21 @@ const mockReports = [
 async function getReports() {
   try {
     const reports = await prisma.report.findMany({
-      include: { source: true },
-      orderBy: { created_at: "desc" },
+      include: { borehole: true },
+      orderBy: { timestamp: "desc" },
     });
-    return reports;
+
+    return reports.map((r) => ({
+      id: r.id,
+      source: { name: r.borehole?.name || "Unknown Source" },
+      status: r.report_content?.includes("Broad")
+        ? "broken"
+        : r.report_content?.toLowerCase() || "unknown", // Simple logic
+      note: r.report_content,
+      created_at: r.timestamp || new Date(),
+      submitted_by: r.reporter_type || "Unknown",
+      approved: r.is_verified === 1,
+    }));
   } catch (e) {
     return mockReports;
   }

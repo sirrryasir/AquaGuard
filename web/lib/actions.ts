@@ -14,18 +14,20 @@ export async function submitReport(formData: FormData) {
   }
 
   try {
-    await prisma.report.create({
-      data: {
-        source_id: parseInt(sourceId.toString()),
-        status: status,
-        note: note || "",
-        submitted_by: "web",
-      },
+    // Find village_id from borehole
+    const borehole = await prisma.borehole.findUnique({
+      where: { id: parseInt(sourceId.toString()) },
     });
 
-    // Also update the source status if it's a critical report?
-    // Maybe let admin approve first. But for demo visualization we might want immediate update.
-    // Let's stick to "Admin approves" rule from prompt.
+    await prisma.report.create({
+      data: {
+        borehole_id: parseInt(sourceId.toString()),
+        village_id: borehole?.village_id,
+        report_content: note || status,
+        reporter_type: "Web Agent",
+        is_verified: 0,
+      },
+    });
 
     revalidatePath("/admin/reports");
     return { success: true, message: "Report submitted successfully" };
@@ -37,19 +39,16 @@ export async function submitReport(formData: FormData) {
 
 export async function approveReport(id: number) {
   try {
-    // Update report to approved
+    // Update report to verified (1)
     const report = await prisma.report.update({
       where: { id },
-      data: { approved: true },
+      data: { is_verified: 1 },
     });
 
-    // Logic to update source status could go here
-    // For example, if report says "working", update source to "working"
-    if (report.status) {
-      await prisma.waterSource.update({
-        where: { id: report.source_id },
-        data: { status: report.status, last_updated: new Date() },
-      });
+    // Update source status if report content matches status (simplified)
+    if (report.borehole_id) {
+      // Ideally we'd parse status from report_content but for now let's skip automatic update or just infer
+      // Leaving explicit status update for manual admin action or separate logic
     }
 
     revalidatePath("/admin/reports");
@@ -77,18 +76,34 @@ export async function addSource(formData: FormData) {
   const name = formData.get("name") as string;
   const lat = parseFloat(formData.get("lat") as string);
   const lng = parseFloat(formData.get("lng") as string);
-  const village = formData.get("village") as string;
+  const villageName = formData.get("village") as string;
 
   try {
-    await prisma.waterSource.create({
+    // Find or create Village
+    let village = await prisma.village.findFirst({
+      where: { name: villageName },
+    });
+
+    if (!village) {
+      village = await prisma.village.create({
+        data: {
+          name: villageName,
+          latitude: lat,
+          longitude: lng,
+          drought_risk_level: "Low",
+        },
+      });
+    }
+
+    await prisma.borehole.create({
       data: {
+        village_id: village.id,
         name,
-        lat,
-        lng,
-        village,
-        status: "working",
+        status: "Working",
+        water_level: 100.0,
       },
     });
+
     revalidatePath("/admin/sources");
     revalidatePath("/water-sources");
     return { success: true };
@@ -100,7 +115,7 @@ export async function addSource(formData: FormData) {
 
 export async function deleteSource(id: number) {
   try {
-    await prisma.waterSource.delete({
+    await prisma.borehole.delete({
       where: { id },
     });
     revalidatePath("/admin/sources");

@@ -14,9 +14,21 @@ export interface WaterSource {
 
 export async function getWaterSources(): Promise<WaterSource[]> {
   try {
-    const res = await prisma.waterSource.findMany();
-    // Map status string to specific union type if needed, but for now string is fine
-    return res as WaterSource[];
+    const res = await prisma.borehole.findMany({
+      include: {
+        village: true,
+      },
+    });
+
+    return res.map((b) => ({
+      id: b.id,
+      name: b.name,
+      lat: b.village.latitude || 0,
+      lng: b.village.longitude || 0,
+      village: b.village.name,
+      status: b.status || "unknown", // Map backend status
+      last_updated: b.last_maintained || new Date(),
+    }));
   } catch (error) {
     console.warn("Database connection failed, using mock data:", error);
     return [

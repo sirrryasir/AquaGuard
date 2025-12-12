@@ -51,10 +51,11 @@ export async function POST(req: Request) {
       const cutoffDate = new Date();
       cutoffDate.setDate(cutoffDate.getDate() - 7);
 
+      // Simple keyword search in report_content
       lowWaterReports = await prisma.report.count({
         where: {
-          status: { in: ["low", "no_water"] },
-          created_at: { gt: cutoffDate },
+          report_content: { contains: "low", mode: "insensitive" },
+          timestamp: { gt: cutoffDate },
         },
       });
     } catch (e) {
@@ -92,17 +93,27 @@ export async function POST(req: Request) {
       console.warn("OpenAI failed:", e);
     }
 
-    // 5. Save Prediction
+    // 5. Save Prediction (Update Village Risk & Create Alert)
     try {
-      await prisma.droughtPrediction.create({
-        data: {
-          village: "Hargeisa",
-          risk_level: riskLevel,
-          ai_message: aiMessage,
-          rainfall: recentRain,
-          confidence_score: 0.85,
-        },
+      // Assuming 'Hargeisa' exists or we find first
+      const village = await prisma.village.findFirst({
+        where: { name: { contains: "Hargeisa", mode: "insensitive" } },
       });
+
+      if (village) {
+        await prisma.village.update({
+          where: { id: village.id },
+          data: { drought_risk_level: riskLevel },
+        });
+
+        await prisma.alert.create({
+          data: {
+            village_id: village.id,
+            message: aiMessage,
+            severity: riskLevel === "Low" ? "Info" : "Warning",
+          },
+        });
+      }
     } catch (e) {
       console.warn("DB Access failed in route (write):", e);
     }

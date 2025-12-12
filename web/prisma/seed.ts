@@ -1,49 +1,63 @@
 import { PrismaClient } from "@prisma/client";
+import { PrismaPg } from "@prisma/adapter-pg";
+import { Pool } from "pg";
+import "dotenv/config";
 
-const prisma = new PrismaClient();
+const connectionString = process.env.DATABASE_URL!;
+const pool = new Pool({ connectionString });
+const adapter = new PrismaPg(pool);
+const prisma = new PrismaClient({ adapter });
 
 async function main() {
+  console.log(`Start seeding ...`);
+
+  // 1. Create Village
+  const village = await prisma.village.upsert({
+    where: { id: 1 }, // Assuming ID 1 for simplicity or just create
+    update: {},
+    create: {
+      name: "Hargeisa",
+      latitude: 9.56,
+      longitude: 44.06,
+      drought_risk_level: "Low",
+    },
+  });
+
+  console.log(`Created/Found village: ${village.name}`);
+
   const waterSources = [
     {
       name: "Central Borehole",
-      lat: 9.562,
-      lng: 44.065,
-      village: "Hargeisa",
-      status: "working",
-      last_updated: new Date(),
+      status: "Working",
+      water_level: 80.0,
     },
     {
       name: "Village Well North",
-      lat: 9.55,
-      lng: 44.05,
-      village: "Hargeisa",
-      status: "low",
-      last_updated: new Date(),
+      status: "Low Water",
+      water_level: 20.0,
     },
     {
       name: "Community Pump",
-      lat: 9.57,
-      lng: 44.08,
-      village: "Hargeisa",
-      status: "broken",
-      last_updated: new Date(),
+      status: "Broken",
+      water_level: 0.0,
     },
     {
       name: "River Access Point",
-      lat: 9.54,
-      lng: 44.04,
-      village: "Hargeisa",
-      status: "no_water",
-      last_updated: new Date(),
+      status: "Low Water",
+      water_level: 10.0,
     },
   ];
 
-  console.log(`Start seeding ...`);
   for (const ws of waterSources) {
-    const source = await prisma.waterSource.create({
-      data: ws,
+    const source = await prisma.borehole.create({
+      data: {
+        village_id: village.id,
+        name: ws.name,
+        status: ws.status,
+        water_level: ws.water_level,
+      },
     });
-    console.log(`Created water source with id: ${source.id}`);
+    console.log(`Created borehole with id: ${source.id}`);
   }
   console.log(`Seeding finished.`);
 }
