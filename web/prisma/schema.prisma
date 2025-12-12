@@ -1,0 +1,51 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model WaterSource {
+  id          Int      @id @default(autoincrement())
+  name        String
+  lat         Float
+  lng         Float
+  village     String
+  status      String
+  last_updated DateTime @default(now())
+  
+  @@map("water_sources")
+  reports     Report[]
+}
+
+model Report {
+  id           Int         @id @default(autoincrement())
+  source_id    Int
+  source       WaterSource @relation(fields: [source_id], references: [id])
+  status       String
+  note         String?
+  submitted_by String
+  approved     Boolean     @default(false)
+  created_at   DateTime    @default(now())
+
+  @@map("reports")
+}
+
+model DroughtPrediction {
+  id               Int      @id @default(autoincrement())
+  village          String
+  risk_level       String
+  ai_message       String
+  rainfall         Float
+  confidence_score Float
+  created_at       DateTime @default(now())
+
+  @@map("drought_predictions")
+}
