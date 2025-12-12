@@ -11,23 +11,23 @@ export const getVillages = async (req: Request, res: Response) => {
   }
 };
 
-// Get all Boreholes (with Village data)
-export const getBoreholes = async (req: Request, res: Response) => {
+// Get all WaterSources (with Village data)
+export const getWaterSources = async (req: Request, res: Response) => {
   try {
-    const boreholes = await prisma.borehole.findMany({
+    const sources = await prisma.waterSource.findMany({
       include: {
         village: true,
       },
     });
 
     // Map to flat structure
-    const flatBoreholes = boreholes.map((b: any) => ({
+    const flatSources = sources.map((b: any) => ({
       ...b,
       village_name: b.village.name,
       drought_risk_level: b.village.drought_risk_level,
     }));
 
-    res.json(flatBoreholes);
+    res.json(flatSources);
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
@@ -35,15 +35,16 @@ export const getBoreholes = async (req: Request, res: Response) => {
 
 // Submit Report (Agent App)
 export const submitReport = async (req: Request, res: Response) => {
-  const { borehole_id, village_id, reporter_type, report_content } = req.body;
+  const { water_source_id, village_id, reporter_type, report_content } =
+    req.body;
 
   try {
     const report = await prisma.report.create({
       data: {
-        borehole_id,
-        village_id,
+        water_source_id: Number(water_source_id),
+        village_id: Number(village_id),
         reporter_type,
-        report_content,
+        content: report_content, // Changed from report_content to content in schema
       },
     });
     res.json({ success: true, id: report.id });
@@ -97,19 +98,20 @@ export const createAlert = async (req: Request, res: Response) => {
   }
 };
 
-// Add Borehole (Dashboard)
-export const addBorehole = async (req: Request, res: Response) => {
-  const { village_id, name, status, water_level } = req.body;
+// Add WaterSource (Dashboard)
+export const addWaterSource = async (req: Request, res: Response) => {
+  const { village_id, name, status, water_level, type } = req.body;
   try {
-    const borehole = await prisma.borehole.create({
+    const source = await prisma.waterSource.create({
       data: {
         village_id,
         name,
         status,
         water_level,
+        type: type || "Borehole",
       },
     });
-    res.json({ success: true, id: borehole.id });
+    res.json({ success: true, id: source.id });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
@@ -181,25 +183,24 @@ export const updateRisk = async (req: Request, res: Response) => {
       }
     }
 
-    const allBoreholes = await prisma.borehole.findMany();
-    if (allBoreholes.length > 0) {
-      const borehole =
-        allBoreholes[Math.floor(Math.random() * allBoreholes.length)];
+    const allSources = await prisma.waterSource.findMany();
+    if (allSources.length > 0) {
+      const source = allSources[Math.floor(Math.random() * allSources.length)];
 
       const change = Math.random() * 10 - 5; // +/- 5%
       let newLevel = Math.max(
         0,
-        Math.min(100, (borehole.water_level || 100) + change)
+        Math.min(100, (source.water_level || 100) + change)
       );
 
-      await prisma.borehole.update({
-        where: { id: borehole.id },
+      await prisma.waterSource.update({
+        where: { id: source.id },
         data: { water_level: newLevel },
       });
 
-      aiSummary += ` Adjusted ${
-        borehole.name
-      } water level to ${newLevel.toFixed(1)}%.`;
+      aiSummary += ` Adjusted ${source.name} water level to ${newLevel.toFixed(
+        1
+      )}%.`;
     }
 
     res.json({ success: true, summary: aiSummary });
@@ -210,12 +211,12 @@ export const updateRisk = async (req: Request, res: Response) => {
 
 export default {
   getVillages,
-  getBoreholes,
+  getWaterSources, // Renamed
   submitReport,
   getReports,
   getAlerts,
   createAlert,
-  addBorehole,
+  addWaterSource, // Renamed
   sendSms,
   updateRisk,
 };

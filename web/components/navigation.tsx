@@ -26,16 +26,7 @@ const NAV_ITEMS = [
 
 export default function Navigation() {
   const pathname = usePathname();
-  const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 20);
-    };
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
 
   return (
     <>
@@ -43,9 +34,7 @@ export default function Navigation() {
       <motion.header
         className={cn(
           "fixed top-0 left-0 right-0 z-50 hidden md:flex items-center justify-between px-6 py-4 transition-all duration-300",
-          isScrolled
-            ? "bg-white/80 backdrop-blur-md shadow-sm"
-            : "bg-transparent"
+          "bg-white/80 backdrop-blur-md shadow-sm"
         )}
         initial={{ y: -100 }}
         animate={{ y: 0 }}
@@ -58,7 +47,7 @@ export default function Navigation() {
           <span
             className={cn(
               "font-bold text-xl tracking-tight",
-              isScrolled ? "text-gray-900" : "text-white"
+              "text-gray-900"
             )}
           >
             AquaGuard
@@ -75,9 +64,7 @@ export default function Navigation() {
                   "relative px-4 py-2 rounded-full text-sm font-medium transition-colors",
                   isActive
                     ? "text-blue-600 bg-white shadow-sm"
-                    : isScrolled
-                    ? "text-gray-600 hover:text-blue-500"
-                    : "text-white/90 hover:text-white hover:bg-white/10"
+                    : "text-gray-600 hover:text-blue-500"
                 )}
               >
                 {isActive && (

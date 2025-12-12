@@ -13,7 +13,7 @@ const handleUssdRequest = async (req: Request, res: Response) => {
       response = `Welcome to AquaGuard
 1. Check Water Availability
 2. Check Drought Risk
-3. Report Borehole Status
+3. Report Water Source Status
 4. Get Water-Saving Tips`;
     } else if (parts[0] === "1") {
       // 1. Check Water Availability
@@ -33,17 +33,16 @@ const handleUssdRequest = async (req: Request, res: Response) => {
           },
         });
         if (village) {
-          const boreholes = await prisma.borehole.findMany({
+          const sources = await prisma.waterSource.findMany({
             where: { village_id: village.id },
           });
-          if (boreholes.length > 0) {
-            const bh = boreholes[0];
-            response = `${village.name} Water: ${bh.status}
-Level: ${bh.water_level}%
-Price: 5 KES/20L
+          if (sources.length > 0) {
+            const src = sources[0]; // Just showing first one for demo
+            response = `${village.name} Water: ${src.status}
+Level: ${src.water_level}%
 Last Update: Today`;
           } else {
-            response = `No boreholes found for ${village.name}`;
+            response = `No water sources found for ${village.name}`;
           }
         } else {
           response = `Village ${villageName} not found.`;
@@ -66,7 +65,6 @@ Last Update: Today`;
         });
         if (village) {
           response = `Drought Risk for ${village.name}: ${village.drought_risk_level}
-Rain Prob: 20%
 Advice: Store water now.`;
         } else {
           response = `Village not found.`;
@@ -76,7 +74,7 @@ Advice: Store water now.`;
     } else if (parts[0] === "3") {
       // 3. Report Status
       if (parts.length === 1) {
-        response = "Enter Borehole ID:";
+        response = "Enter Source ID:";
       } else if (parts.length === 2) {
         response = `Select Status:
 1. Water Finished
@@ -89,19 +87,19 @@ Advice: Store water now.`;
           "3": "Working",
         };
         const status = statusMap[parts[2]] || "Unknown";
-        const bhId = parseInt(parts[1]); // Ensure Int
+        const srcId = parseInt(parts[1]); // Ensure Int
         // Update DB
-        if (!isNaN(bhId)) {
+        if (!isNaN(srcId)) {
           await prisma.report.create({
             data: {
-              borehole_id: bhId,
+              water_source_id: srcId,
               reporter_type: "USSD",
-              report_content: `User reported status: ${status}`,
+              content: `User reported status: ${status}`,
             },
           });
-          response = `Report received for Borehole ${bhId}. Thank you.`;
+          response = `Report received for Source ${srcId}. Thank you.`;
         } else {
-          response = "Invalid Borehole ID.";
+          response = "Invalid Source ID.";
         }
         type = "END";
       }

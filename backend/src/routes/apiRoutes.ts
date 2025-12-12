@@ -6,8 +6,8 @@ const router = express.Router();
 // Get all Villages
 router.get("/villages", apiController.getVillages);
 
-// Get all Boreholes (with Village data)
-router.get("/boreholes", apiController.getBoreholes);
+// Get all Water Sources (with Village data)
+router.get("/water-sources", apiController.getWaterSources);
 
 // Submit Report (Agent App)
 router.post("/reports", apiController.submitReport);
@@ -21,8 +21,8 @@ router.get("/alerts", apiController.getAlerts);
 // Create Alert (Admin/AI)
 router.post("/alerts", apiController.createAlert);
 
-// Add Borehole (Dashboard)
-router.post("/boreholes", apiController.addBorehole);
+// Add Water Source (Dashboard)
+router.post("/water-sources", apiController.addWaterSource);
 
 // Send SMS Mock
 router.post("/sms/send", apiController.sendSms);
