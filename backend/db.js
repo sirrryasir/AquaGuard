@@ -1,90 +1,91 @@
-const Database = require('better-sqlite3');
-const path = require('path');
+import { PrismaClient } from "@prisma/client";
+import { PrismaPg } from "@prisma/adapter-pg"; // Prisma 7
+import pkg from "pg"; // pg is CJS
+const { Pool } = pkg;
+import "dotenv/config";
 
-const dbPath = path.resolve(__dirname, 'aquaguard.db');
-const db = new Database(dbPath, { verbose: console.log });
+const connectionString = process.env.DATABASE_URL;
 
-// Initialize Tables
-const initDb = () => {
-    // Villages
-    db.prepare(`
-        CREATE TABLE IF NOT EXISTS villages (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT NOT NULL,
-            district TEXT,
-            latitude REAL,
-            longitude REAL,
-            drought_risk_level TEXT DEFAULT 'Low' -- Low, Medium, High, Severe
-        )
-    `).run();
+const pool = new Pool({ connectionString });
+const adapter = new PrismaPg(pool);
+const prisma = new PrismaClient({ adapter });
 
-    // Boreholes
-    db.prepare(`
-        CREATE TABLE IF NOT EXISTS boreholes (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            village_id INTEGER NOT NULL,
-            name TEXT NOT NULL,
-            status TEXT DEFAULT 'Working', -- Working, Broken, Low Water
-            water_level REAL DEFAULT 100.0, -- Percentage
-            last_maintained DATETIME,
-            FOREIGN KEY (village_id) REFERENCES villages(id)
-        )
-    `).run();
+// Initialize/Seed Data
+const initDb = async () => {
+  try {
+    const villageCount = await prisma.village.count();
 
-    // Reports (from USSD or Agents)
-    db.prepare(`
-        CREATE TABLE IF NOT EXISTS reports (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            borehole_id INTEGER,
-            village_id INTEGER,
-            reporter_type TEXT, -- User (USSD), Agent (App)
-            report_content TEXT,
-            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-            is_verified INTEGER DEFAULT 0
-        )
-    `).run();
+    if (villageCount === 0) {
+      console.log("Seeding data...");
 
-    // Alerts (AI Generated or Admin)
-    db.prepare(`
-        CREATE TABLE IF NOT EXISTS alerts (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            village_id INTEGER,
-            message TEXT,
-            severity TEXT, -- Info, Warning, Critical
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-        )
-    `).run();
+      // Villages
+      const v1 = await prisma.village.create({
+        data: {
+          name: "Wajir North",
+          district: "Wajir",
+          latitude: 1.7471,
+          longitude: 40.0573,
+          drought_risk_level: "High",
+        },
+      });
 
-    console.log("Database initialized.");
+      const v2 = await prisma.village.create({
+        data: {
+          name: "Marsabit Central",
+          district: "Marsabit",
+          latitude: 2.3369,
+          longitude: 37.9904,
+          drought_risk_level: "Medium",
+        },
+      });
 
-    // Seed Data
-    const seed = () => {
-        const villageCount = db.prepare("SELECT COUNT(*) as count FROM villages").get().count;
-        if (villageCount === 0) {
-            console.log("Seeding data...");
-            // Villages
-            const insertVillage = db.prepare("INSERT INTO villages (name, district, latitude, longitude, drought_risk_level) VALUES (?, ?, ?, ?, ?)");
-            insertVillage.run("Wajir North", "Wajir", 1.7471, 40.0573, "High");
-            insertVillage.run("Marsabit Central", "Marsabit", 2.3369, 37.9904, "Medium");
-            insertVillage.run("Lodwar Town", "Turkana", 3.1191, 35.5973, "Severe");
+      const v3 = await prisma.village.create({
+        data: {
+          name: "Lodwar Town",
+          district: "Turkana",
+          latitude: 3.1191,
+          longitude: 35.5973,
+          drought_risk_level: "Severe",
+        },
+      });
 
-            // Boreholes
-            const v1 = db.prepare("SELECT id FROM villages WHERE name = 'Wajir North'").get().id;
-            const v2 = db.prepare("SELECT id FROM villages WHERE name = 'Marsabit Central'").get().id;
-            const v3 = db.prepare("SELECT id FROM villages WHERE name = 'Lodwar Town'").get().id;
+      // Boreholes
+      await prisma.borehole.createMany({
+        data: [
+          {
+            village_id: v1.id,
+            name: "BH-001 Wajir A",
+            status: "Working",
+            water_level: 80.0,
+          },
+          {
+            village_id: v1.id,
+            name: "BH-002 Wajir B",
+            status: "Broken",
+            water_level: 0.0,
+          },
+          {
+            village_id: v2.id,
+            name: "BH-003 Marsabit A",
+            status: "Working",
+            water_level: 60.5,
+          },
+          {
+            village_id: v3.id,
+            name: "BH-004 Lodwar Main",
+            status: "Low Water",
+            water_level: 15.0,
+          },
+        ],
+      });
 
-            const insertBorehole = db.prepare("INSERT INTO boreholes (village_id, name, status, water_level) VALUES (?, ?, ?, ?)");
-            insertBorehole.run(v1, "BH-001 Wajir A", "Working", 80.0);
-            insertBorehole.run(v1, "BH-002 Wajir B", "Broken", 0.0);
-            insertBorehole.run(v2, "BH-003 Marsabit A", "Working", 60.5);
-            insertBorehole.run(v3, "BH-004 Lodwar Main", "Low Water", 15.0);
-            
-            console.log("Seeding complete.");
-        }
-    };
-    seed();
+      console.log("Seeding complete.");
+    }
+  } catch (error) {
+    console.error("Seeding error:", error);
+  }
 };
 
 initDb();
 
-module.exports = db;
+export default prisma;
