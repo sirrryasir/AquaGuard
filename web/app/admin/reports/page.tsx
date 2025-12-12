@@ -60,7 +60,7 @@ export default async function AdminReportsPage() {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
-            {reports.map((report) => (
+            {reports.map((report: any) => (
               <tr
                 key={report.id}
                 className="hover:bg-gray-50 transition-colors"
