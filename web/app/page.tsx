@@ -23,22 +23,6 @@ const FEATURES = [
     delay: 0.1,
   },
   {
-    title: "Drought AI",
-    desc: "Early warning system powered by satellite weather data.",
-    icon: AlertTriangle,
-    href: "/drought-alerts",
-    color: "bg-orange-100 text-orange-600",
-    delay: 0.2,
-  },
-  {
-    title: "Water Calculator",
-    desc: "Smart usage planner for households and farms.",
-    icon: Calculator,
-    href: "/calculator",
-    color: "bg-cyan-100 text-cyan-600",
-    delay: 0.3,
-  },
-  {
     title: "Admin Portal",
     desc: "Manage sources, approve reports, and view logs.",
     icon: Droplet,
@@ -66,8 +50,8 @@ export default function Home() {
               Somaliland Water Intelligence Platform
             </span>
             <h1 className="text-5xl md:text-7xl font-black tracking-tight mb-8 leading-tight">
-              AquaGuard <br />
-              <span className="text-blue-300">Resilience.</span>
+              Ogaal <br />
+              <span className="text-blue-300">Platform.</span>
             </h1>
             <p className="text-xl md:text-2xl text-blue-100 max-w-2xl mx-auto mb-12 leading-relaxed">
               Monitoring water resources in real-time. Empowering communities
@@ -168,7 +152,7 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-4 gap-12 text-sm">
           <div className="col-span-1 md:col-span-2">
             <span className="text-white font-bold text-2xl mb-6 block">
-              AquaGuard
+              Ogaal
             </span>
             <p className="max-w-xs leading-relaxed">
               Building digital infrastructure for water security in the Horn of
@@ -216,7 +200,7 @@ export default function Home() {
           </div>
         </div>
         <div className="max-w-7xl mx-auto px-6 mt-16 pt-8 border-t border-gray-800 text-center md:text-left flex flex-col md:flex-row justify-between items-center">
-          <p>&copy; 2025 AquaGuard Somaliland.</p>
+          <p>&copy; 2025 Ogaal Somaliland.</p>
           <p className="mt-2 md:mt-0 opacity-50">
             Built with Next.js 16 & Tailwind
           </p>

@@ -42,7 +42,7 @@ export default function AgentPage() {
     for (const report of reports) {
       if (!report.synced) {
         try {
-          await fetch("http://localhost:3001/api/reports", {
+          await fetch("https://barwaaqo.onrender.com/api/reports", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -71,7 +71,7 @@ export default function AgentPage() {
           offlineMode ? "bg-gray-800" : "bg-green-600"
         }`}
       >
-        <h1 className="font-bold text-lg">💧 AquaGuard Agent</h1>
+        <h1 className="font-bold text-lg">💧 Ogaal Agent</h1>
         <div
           onClick={() => setOfflineMode(!offlineMode)}
           className="flex items-center space-x-2 text-sm cursor-pointer bg-white/20 px-2 py-1 rounded"

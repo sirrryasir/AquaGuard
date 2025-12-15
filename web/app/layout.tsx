@@ -7,7 +7,7 @@ import Navigation from "@/components/navigation";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "AquaGuard - Somaliland Water Intelligence",
+  title: "Ogaal - Somaliland Water Intelligence",
   description:
     "Community-driven water source monitoring and drought early warning system.",
   manifest: "/manifest.json",
@@ -23,7 +23,7 @@ export default function RootLayout({
       <body className={inter.className}>
         <OfflineBanner />
         <Navigation />
-        {children}
+        <main className="pt-20 min-h-screen bg-gray-50">{children}</main>
       </body>
     </html>
   );
